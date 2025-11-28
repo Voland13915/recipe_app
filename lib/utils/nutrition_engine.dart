@@ -1,5 +1,28 @@
 import 'package:nutrition_app/models/models.dart';
 
+class DishScoreConfig {
+  final double targetCalories;
+  final double targetProteins;
+  final double targetFats;
+  final double targetCarbs;
+
+  final double wCalories;
+  final double wProteins;
+  final double wFats;
+  final double wCarbs;
+
+  const DishScoreConfig({
+    this.targetCalories = 600,
+    this.targetProteins = 26,
+    this.targetFats = 17,
+    this.targetCarbs = 80,
+    this.wCalories = 2,
+    this.wProteins = 3,
+    this.wFats = 2,
+    this.wCarbs = 1,
+  });
+}
+
 class PortionNutrients {
   final double calories;
   final double proteins;
@@ -154,5 +177,58 @@ class PortionNutrients {
       );
     }
     return total;
+  }
+}
+
+class NutritionEngine {
+  static double computeDishScore(
+      Recipe r, {
+        DishScoreConfig config = const DishScoreConfig(),
+      }) {
+    final k = r.caloriesPerServing;
+    final p = r.proteinsPerServing;
+    final f = r.fatsPerServing;
+    final c = r.carbsPerServing;
+
+    double sq(double x) => x * x;
+
+    final eCalories =
+        sq((k - config.targetCalories) / config.targetCalories) * config.wCalories;
+    final eProteins =
+        sq((p - config.targetProteins) / config.targetProteins) * config.wProteins;
+    final eFats = sq((f - config.targetFats) / config.targetFats) * config.wFats;
+    final eCarbs = sq((c - config.targetCarbs) / config.targetCarbs) * config.wCarbs;
+
+    final error = eCalories + eProteins + eFats + eCarbs;
+
+    return 1.0 / (1.0 + error);
+  }
+
+  static Recipe? findOptimalRecipe(
+      List<Recipe> recipes, {
+        DishScoreConfig config = const DishScoreConfig(),
+      }) {
+    final filtered = recipes.where((r) {
+      final k = r.caloriesPerServing;
+      final p = r.proteinsPerServing;
+      return k >= 400 && k <= 800 && p >= 20;
+    }).toList();
+
+    if (filtered.isEmpty) {
+      return null;
+    }
+
+    Recipe best = filtered.first;
+    double bestScore = computeDishScore(best, config: config);
+
+    for (final r in filtered.skip(1)) {
+      final score = computeDishScore(r, config: config);
+      if (score > bestScore) {
+        bestScore = score;
+        best = r;
+      }
+    }
+
+    return best;
   }
 }

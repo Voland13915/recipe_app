@@ -41,7 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final recipeProvider = context.watch<ListOfRecipes>();
     final recipes = recipeProvider.getRecipes;
-    final recipe = _selectedRecipe ?? (recipes.isNotEmpty ? recipes.first : null);
+    final optimalRecipe = NutritionEngine.findOptimalRecipe(recipes);
+    final recipe = _selectedRecipe ?? optimalRecipe ?? (recipes.isNotEmpty ? recipes.first : null);
 
     return Scaffold(
       body: recipeProvider.isLoading
@@ -61,6 +62,18 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 40.0),
               const HomeGrid(),
               const SizedBox(height: 30.0),
+              ElevatedButton(
+                onPressed: () {
+                  final optimal = NutritionEngine.findOptimalRecipe(recipes);
+                  if (optimal != null) {
+                    setState(() {
+                      _selectedRecipe = optimal;
+                    });
+                  }
+                },
+                child: const Text('Подобрать оптимальное блюдо'),
+              ),
+              const SizedBox(height: 16.0),
               _NutritionTester(
                 recipes: recipes,
                 selectedRecipe: recipe,
