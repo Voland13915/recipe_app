@@ -105,12 +105,44 @@ class ListOfRecipes with ChangeNotifier {
       await _database!.rawQuery('SELECT COUNT(*) FROM recipes'),
     );
 
-    if (count != null && count > 0) return;
+    if (count == null || count == 0) {
+      final batch = _database!.batch();
+      for (final recipe in _seedRecipes) {
+        batch.insert('recipes', _recipeToDbMap(recipe));
+      }
+      await batch.commit(noResult: true);
+    }
+
+    await _seedProductsIfNeeded();
+  }
+
+  Future<void> _seedProductsIfNeeded() async {
+    if (_database == null) return;
+
+    final productCount = Sqflite.firstIntValue(
+      await _database!.rawQuery('SELECT COUNT(*) FROM products'),
+    );
+
+    if (productCount != null && productCount > 0) return;
+
+    final uniqueIngredients = <String>{};
+    for (final recipe in _seedRecipes) {
+      uniqueIngredients.addAll(recipe.recipeIngredients);
+    }
+
+    if (uniqueIngredients.isEmpty) return;
 
     final batch = _database!.batch();
-    for (final recipe in _seedRecipes) {
-      batch.insert('recipes', _recipeToDbMap(recipe));
+    for (final ingredient in uniqueIngredients) {
+      batch.insert('products', {
+        'name': ingredient,
+        'caloriesPer100': 0,
+        'proteinsPer100': 0,
+        'fatsPer100': 0,
+        'carbsPer100': 0,
+      });
     }
+
     await batch.commit(noResult: true);
   }
 
