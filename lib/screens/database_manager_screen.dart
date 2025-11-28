@@ -739,13 +739,16 @@ class _IngredientRowWidget extends StatelessWidget {
           Expanded(
             flex: 2,
             child: DropdownButtonFormField<Product>(
+              isExpanded: true,
               value: row.product ?? (availableProducts.isNotEmpty ? availableProducts.first : null),
               items: availableProducts
                   .map(
                     (p) => DropdownMenuItem(
                   value: p,
-                  child: Text(p.name),
-                ),
+                  child: Text(
+                    p.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),),
               )
                   .toList(),
               onChanged: (value) => onChanged(row.copyWith(product: value)),

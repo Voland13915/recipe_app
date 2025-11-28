@@ -195,13 +195,17 @@ class _NutritionTester extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<Recipe>(
+              isExpanded: true,
               value: recipe,
               items: recipes
                   .map(
                     (r) => DropdownMenuItem(
-                  value: r,
-                  child: Text(r.recipeName),
-                ),
+                      value: r,
+                      child: Text(
+                        r.recipeName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
               )
                   .toList(),
               onChanged: onRecipeChanged,
