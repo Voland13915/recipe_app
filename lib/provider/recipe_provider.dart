@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:nutrition_app/models/models.dart';  // Изменён путь
 import 'package:sqflite/sqflite.dart';  // Для будущей БД
 import 'package:nutrition_app/utils/database_schema.dart';
+import 'package:nutrition_app/provider/nutrition_repository.dart';
 
 class ListOfRecipes with ChangeNotifier {
   Database? _database;  // Для SQLite
@@ -12,6 +13,12 @@ class ListOfRecipes with ChangeNotifier {
   List<Recipe> _recipes = [];
 
   bool get isLoading => _isLoading;
+
+  Future<Database> _ensureDatabase() async {
+    if (_database != null) return _database!;
+    await initDatabase();
+    return _database!;
+  }
 
   void _updateLoading(bool value) {
     if (_isLoading == value) return;
@@ -34,7 +41,7 @@ class ListOfRecipes with ChangeNotifier {
 
   // Инициализация БД (вызовите в init)
   Future<void> initDatabase() async {
-        if (_database != null) return;
+    if (_database != null) return;
 
     _database = await DatabaseSchema.open();
 
@@ -113,6 +120,10 @@ class ListOfRecipes with ChangeNotifier {
     final results = await _database!.query('recipes');
     _recipes = results.map(_recipeFromDbMap).toList();
     notifyListeners();
+  }
+
+  Future<void> reloadRecipes() async {
+    await _loadRecipesFromDb();
   }
 
   // Нормализация категорий: поддерживаем и русские, и английские
@@ -974,6 +985,124 @@ class ListOfRecipes with ChangeNotifier {
 
   List<Recipe> get getRecipes {
     return _recipes;
+  }
+
+  Future<List<Product>> fetchProducts() async {
+    final db = await _ensureDatabase();
+    final rows = await db.query('products', orderBy: 'name');
+
+    return rows
+        .map(
+          (row) => Product(
+        id: row['id'] as int?,
+        name: row['name'] as String,
+        caloriesPer100: (row['caloriesPer100'] as num).toDouble(),
+        proteinsPer100: (row['proteinsPer100'] as num).toDouble(),
+        fatsPer100: (row['fatsPer100'] as num).toDouble(),
+        carbsPer100: (row['carbsPer100'] as num).toDouble(),
+      ),
+    )
+        .toList();
+  }
+
+  Future<Product> upsertProduct(Product product) async {
+    final repo = NutritionRepository();
+    final id = await repo.upsertProduct(product);
+    return Product(
+      id: id,
+      name: product.name,
+      caloriesPer100: product.caloriesPer100,
+      proteinsPer100: product.proteinsPer100,
+      fatsPer100: product.fatsPer100,
+      carbsPer100: product.carbsPer100,
+    );
+  }
+
+  Future<void> deleteProduct(int productId) async {
+    final db = await _ensureDatabase();
+    await db.transaction((txn) async {
+      await txn.delete('recipe_ingredients', where: 'productId = ?', whereArgs: [productId]);
+      await txn.delete('products', where: 'id = ?', whereArgs: [productId]);
+    });
+  }
+
+  Future<List<RecipeIngredientRecord>> fetchRecipeIngredients(int recipeId) async {
+    final repo = NutritionRepository();
+    return repo.getRecipeIngredients(recipeId);
+  }
+
+  Future<Recipe> upsertRecipe(
+      Recipe recipe, {
+        List<RecipeIngredientRecord> ingredients = const [],
+      }) async {
+    final db = await _ensureDatabase();
+    final repo = NutritionRepository();
+
+    final map = _recipeToDbMap(recipe);
+    final existing = await db.query('recipes', where: 'id = ?', whereArgs: [recipe.recipeId]);
+    int recipeId = recipe.recipeId;
+
+    if (existing.isEmpty) {
+      final insertMap = Map<String, dynamic>.from(map)..remove('id');
+      recipeId = await db.insert('recipes', insertMap);
+    } else {
+      await db.update('recipes', map, where: 'id = ?', whereArgs: [recipe.recipeId]);
+    }
+
+    if (ingredients.isNotEmpty) {
+      final normalized = ingredients
+          .map(
+            (i) => RecipeIngredientRecord(
+          id: i.id,
+          recipeId: recipeId,
+          productId: i.productId,
+          grams: i.grams,
+        ),
+      )
+          .toList();
+      await repo.replaceRecipeIngredients(recipeId, normalized);
+    }
+
+    final updatedRecipe = Recipe(
+      recipeId: recipeId,
+      recipeCategory: recipe.recipeCategory,
+      recipeName: recipe.recipeName,
+      recipeImage: recipe.recipeImage,
+      recipeDescription: recipe.recipeDescription,
+      prepTime: recipe.prepTime,
+      cookTime: recipe.cookTime,
+      recipeServing: recipe.recipeServing,
+      recipeIngredients: recipe.recipeIngredients,
+      recipeMethod: recipe.recipeMethod,
+      recipeReview: recipe.recipeReview,
+      isPopular: recipe.isPopular,
+      caloriesPerServing: recipe.caloriesPerServing,
+      proteinsPerServing: recipe.proteinsPerServing,
+      fatsPerServing: recipe.fatsPerServing,
+      carbsPerServing: recipe.carbsPerServing,
+      gramsPerServing: recipe.gramsPerServing,
+    );
+
+    final index = _recipes.indexWhere((r) => r.recipeId == recipeId);
+    if (index >= 0) {
+      _recipes[index] = updatedRecipe;
+    } else {
+      _recipes.add(updatedRecipe);
+    }
+
+    notifyListeners();
+    return updatedRecipe;
+  }
+
+  Future<void> deleteRecipe(int recipeId) async {
+    final db = await _ensureDatabase();
+    await db.transaction((txn) async {
+      await txn.delete('recipe_ingredients', where: 'recipeId = ?', whereArgs: [recipeId]);
+      await txn.delete('recipes', where: 'id = ?', whereArgs: [recipeId]);
+    });
+
+    _recipes.removeWhere((r) => r.recipeId == recipeId);
+    notifyListeners();
   }
 
   Recipe findById(double id) {

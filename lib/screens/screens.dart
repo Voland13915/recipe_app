@@ -7,3 +7,5 @@ export 'saved_screen.dart';
 export 'account_screen.dart';
 export 'settings_screen.dart';
 export 'app_info_screen.dart';
+export 'app_info_screen.dart';
+export 'database_manager_screen.dart';

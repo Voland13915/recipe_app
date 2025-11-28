@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:nutrition_app/models/models.dart';
 import 'package:nutrition_app/provider/provider.dart';
-import 'package:nutrition_app/screens/dish_builder_screen.dart';
+// import 'package:nutrition_app/screens/dish_builder_screen.dart';
+import 'package:nutrition_app/screens/database_manager_screen.dart';
 import 'package:nutrition_app/screens/screens.dart';
 import 'package:nutrition_app/utils/nutrition_engine.dart';
 import 'package:nutrition_app/utils/utils.dart';
@@ -90,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const DishBuilderScreen()),
+                    MaterialPageRoute(builder: (context) => const DatabaseManagerScreen()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -98,13 +99,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   minimumSize: Size(double.infinity, 5.0.h),
                 ),
                 child: Text(
-                  'Создать блюдо',
+                  'Управление базой блюд',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white),
                 ),
               ),
               const SizedBox(height: 30.0),
               Text(
-                'Popular Recipes',
+                'Популярные блюда',
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
               const SizedBox(height: 20.0),
