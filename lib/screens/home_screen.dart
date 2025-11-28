@@ -64,16 +64,29 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 40.0),
               const HomeGrid(),
               const SizedBox(height: 30.0),
-              ElevatedButton(
-                onPressed: () {
-                  final optimal = NutritionEngine.findOptimalRecipe(recipes);
-                  if (optimal != null) {
-                    setState(() {
-                      _selectedRecipe = optimal;
-                    });
-                  }
-                },
-                child: const Text('Подобрать оптимальное блюдо'),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final optimal = NutritionEngine.findOptimalRecipe(recipes);
+                    if (optimal != null) {
+                      setState(() {
+                        _selectedRecipe = optimal;
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    minimumSize: Size(double.infinity, 5.0.h),
+                  ),
+                  child: Text(
+                    'Подобрать оптимальное блюдо',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineMedium
+                        ?.copyWith(color: Colors.white),
+                  ),
+                ),
               ),
               const SizedBox(height: 16.0),
               _NutritionTester(
