@@ -740,7 +740,7 @@ class _IngredientRowWidget extends StatelessWidget {
             flex: 2,
             child: DropdownButtonFormField<Product>(
               isExpanded: true,
-              value: row.product ?? (availableProducts.isNotEmpty ? availableProducts.first : null),
+              value: _findSelectedProduct(row.product, availableProducts),
               items: availableProducts
                   .map(
                     (p) => DropdownMenuItem(
@@ -774,5 +774,15 @@ class _IngredientRowWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+  Product? _findSelectedProduct(Product? product, List<Product> products) {
+    if (products.isEmpty) return null;
+    if (product == null) return products.first;
+    for (final item in products) {
+      if (item.id == product.id) {
+        return item;
+      }
+    }
+    return products.first;
   }
 }

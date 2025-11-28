@@ -43,8 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final recipeProvider = context.watch<ListOfRecipes>();
     final recipes = recipeProvider.getRecipes;
     final optimalRecipe = NutritionEngine.findOptimalRecipe(recipes);
-    final recipe = _selectedRecipe ?? optimalRecipe ?? (recipes.isNotEmpty ? recipes.first : null);
-
+    final recipe = _findRecipeInList(_selectedRecipe, recipes) ??
+        optimalRecipe ??
+        (recipes.isNotEmpty ? recipes.first : null);
     return Scaffold(
       body: recipeProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -116,6 +117,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+  Recipe? _findRecipeInList(Recipe? recipe, List<Recipe> recipes) {
+    if (recipe == null) return null;
+    for (final item in recipes) {
+      if (item.recipeId == recipe.recipeId) {
+        return item;
+      }
+    }
+    return null;
   }
 }
 
