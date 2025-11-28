@@ -539,7 +539,7 @@ class _RecipeFormSheetState extends State<RecipeFormSheet> {
     )
         .toList();
 
-    final totals = NutritionEngine.fromIngredients(ingredientRecords, productMap);
+    final totals = PortionNutrients.fromIngredients(ingredientRecords, productMap);
     final totalGrams = ingredientRecords.fold<double>(0, (sum, item) => sum + item.grams);
     final gramsPerServing = double.tryParse(_gramsController.text.replaceAll(',', '.')) ??
         (servings > 0 ? totalGrams / servings : totalGrams);
