@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:nutrition_app/models/models.dart';
 import 'package:nutrition_app/provider/dish_provider.dart';
+import 'package:nutrition_app/utils/food_api_client.dart';
 import 'package:sizer/sizer.dart';
 import 'package:unicons/unicons.dart';
 
@@ -150,33 +151,112 @@ class DishBuilderScreen extends StatelessWidget {
     );
   }
 
-  // Диалог для добавления ингредиента (mock-список)
+  // Диалог для добавления ингредиента через поиск по базе
   void _showAddIngredientDialog(BuildContext context, DishProvider provider) {
-    final mockIngredients = [
-      Ingredient(name: 'Курица', caloriesPer100g: 165, proteinsPer100g: 31, fatsPer100g: 3.6, carbsPer100g: 0),
-      Ingredient(name: 'Рис', caloriesPer100g: 130, proteinsPer100g: 2.7, fatsPer100g: 0.3, carbsPer100g: 28),
-      Ingredient(name: 'Авокадо', caloriesPer100g: 160, proteinsPer100g: 2, fatsPer100g: 15, carbsPer100g: 9),
-      // Добавьте больше mock
-    ];
+    final TextEditingController searchController = TextEditingController();
+    final FoodApiClient apiClient = FoodApiClient();
+    List<Ingredient> results = <Ingredient>[];
+    bool isLoading = false;
+    String? errorMessage;
+
+    Future<void> search(String query, void Function(void Function()) setState) async {
+      if (query.trim().isEmpty) {
+        setState(() {
+          errorMessage = 'Введите название продукта';
+          results = <Ingredient>[];
+        });
+        return;
+      }
+
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+
+      try {
+        final List<Ingredient> fetchedResults = await apiClient.searchIngredients(query);
+        setState(() {
+          results = fetchedResults;
+          errorMessage = fetchedResults.isEmpty ? 'Ничего не найдено' : null;
+        });
+      } catch (e) {
+        setState(() {
+          errorMessage = 'Не удалось загрузить продукты. Проверьте подключение.';
+          results = <Ingredient>[];
+        });
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Выберите ингредиент'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            itemCount: mockIngredients.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(mockIngredients[index].name),
-                onTap: () {
-                  provider.addIngredient(mockIngredients[index]);
-                  Navigator.pop(context);
-                },
-              );
-            },
-          ),
+        title: const Text('Найти ингредиент'),
+        content: StatefulBuilder(
+          builder: (context, setState) {
+            return SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      labelText: 'Название продукта',
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.search),
+                        onPressed: () => search(searchController.text, setState),
+                      ),
+                    ),
+                    onSubmitted: (value) => search(value, setState),
+                  ),
+                  const SizedBox(height: 12),
+                  if (isLoading) const LinearProgressIndicator(),
+                  if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 300,
+                    child: results.isEmpty && !isLoading && errorMessage == null
+                        ? const Center(child: Text('Начните поиск продукта'))
+                        : ListView.builder(
+                      itemCount: results.length,
+                      itemBuilder: (context, index) {
+                        final ingredient = results[index];
+                        return ListTile(
+                          title: Text(ingredient.name),
+                          subtitle: Text(
+                            'Ккал: ${ingredient.caloriesPer100g.toStringAsFixed(0)}, Б: ${ingredient.proteinsPer100g.toStringAsFixed(1)}, Ж: ${ingredient.fatsPer100g.toStringAsFixed(1)}, У: ${ingredient.carbsPer100g.toStringAsFixed(1)} (на 100г)',
+                          ),
+                          onTap: () {
+                            provider.addIngredient(
+                              Ingredient(
+                                name: ingredient.name,
+                                caloriesPer100g: ingredient.caloriesPer100g,
+                                proteinsPer100g: ingredient.proteinsPer100g,
+                                fatsPer100g: ingredient.fatsPer100g,
+                                carbsPer100g: ingredient.carbsPer100g,
+                              ),
+                            );
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

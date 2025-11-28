@@ -23,6 +23,7 @@ dependencies:
   provider: ^6.1.2
   sqflite: ^2.3.3+1  # Добавлено для SQLite БД (пункт 1 задания)
   path: ^1.9.0  # Для sqflite
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
