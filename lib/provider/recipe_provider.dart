@@ -167,7 +167,7 @@ class ListOfRecipes with ChangeNotifier {
         if (normalized.contains(entry.key)) {
           final hint = entry.value;
           return Product(
-            name: ingredient,
+            name: entry.key,
             caloriesPer100: hint.caloriesPer100,
             proteinsPer100: hint.proteinsPer100,
             fatsPer100: hint.fatsPer100,
