@@ -285,12 +285,16 @@ class HomeHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProfile>();
+    final trimmedName = user.name.trim();
+    final greeting = trimmedName.isNotEmpty
+        ? 'Good day, $trimmedName'
+        : 'Good day';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Good Morning, ${user.name}',
+          greeting,
           style: Theme.of(context).textTheme.headlineLarge,
         ),
         const Spacer(flex: 3),

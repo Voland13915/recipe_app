@@ -132,6 +132,7 @@ class ProfileListView extends StatelessWidget {
     );
 
     if ((shouldLogout ?? false) && context.mounted) {
+      context.read<UserProfile>().logout();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('You have been logged out.'),

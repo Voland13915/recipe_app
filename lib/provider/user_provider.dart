@@ -6,11 +6,13 @@ class UserProfile extends ChangeNotifier {
     String? email,
     String? password,
     String? profileImageUrl,
-  })  : _name = name ?? 'Devina Hermawan',
-        _email = email ?? 'devina@example.com',
-        _password = password ?? 'password123',
-        _profileImageUrl = profileImageUrl ??
-            'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1740&q=80';
+  })  : _name = name ?? '',
+        _email = email ?? '',
+        _password = password ?? '',
+        _profileImageUrl = profileImageUrl ?? _defaultImageUrl;
+
+  static const String _defaultImageUrl =
+      'https://avatars.mds.yandex.net/i?id=90e4d998805789a1184caa7e660bc922_l-5869421-images-thumbs&n=13';
 
   String _name;
   String _email;
@@ -40,6 +42,13 @@ class UserProfile extends ChangeNotifier {
     if (profileImageUrl != null && profileImageUrl.trim().isNotEmpty) {
       _profileImageUrl = profileImageUrl.trim();
     }
+    notifyListeners();
+  }
+  void logout() {
+    _name = '';
+    _email = '';
+    _password = '';
+    _profileImageUrl = _defaultImageUrl;
     notifyListeners();
   }
 }
