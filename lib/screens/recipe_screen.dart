@@ -1,5 +1,4 @@
 // recipe_screen
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:unicons/unicons.dart';
@@ -57,8 +56,10 @@ class _RecipeHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = recipe.recipeImage.trim();
-    final heroImageUrl = (imageUrl.isNotEmpty && imageUrl.toLowerCase() != 'null')
+    final rawImage = recipe.recipeImage;
+    final imageUrl = rawImage.trim();
+    final hasImage = imageUrl.isNotEmpty && imageUrl.toLowerCase() != 'null';
+    final heroImageUrl = hasImage
         ? imageUrl
         : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200';
     return SliverAppBar(
@@ -74,11 +75,10 @@ class _RecipeHero extends StatelessWidget {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            CachedNetworkImage(
-              imageUrl: heroImageUrl,
+            Image.network(
+              heroImageUrl,
               fit: BoxFit.cover,
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey.shade300,
+              errorBuilder: (context, error, stackTrace) => Container(                color: Colors.grey.shade300,
                 child: const Icon(Icons.image_not_supported),
               ),
             ),
