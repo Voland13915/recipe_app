@@ -727,6 +727,11 @@ class _RecipeFormSheetState extends State<RecipeFormSheet> {
                 decoration: const InputDecoration(labelText: 'Грамм на порцию (опционально)'),
                 keyboardType: TextInputType.number,
               ),
+              TextFormField(
+                controller: _methodController,
+                decoration: const InputDecoration(labelText: 'Приготовление (по шагам)'),
+                maxLines: 5,
+              ),
               SwitchListTile(
                 title: const Text('Отмечать как популярное'),
                 value: _isPopular,

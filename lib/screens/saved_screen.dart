@@ -358,6 +358,9 @@ class _SavedRecipesState extends State<SavedRecipes> {
             itemCount: filteredRecipes.length,
             itemBuilder: (context, index) {
               var recipe = filteredRecipes[index];
+              final colorScheme = Theme.of(context).colorScheme;
+              final textColor = colorScheme.onSurface;
+              final iconColor = colorScheme.onSurfaceVariant;
               return Dismissible(
                 direction: DismissDirection.endToStart,
                 background: Container(
@@ -390,7 +393,7 @@ class _SavedRecipesState extends State<SavedRecipes> {
                   child: SizedBox(
                     height: 20.0.h,
                     child: Material(
-                      color: Colors.white,
+                      color: colorScheme.surface,
                       elevation: 2.0,
                       child: Row(
                         children: [
@@ -409,8 +412,7 @@ class _SavedRecipesState extends State<SavedRecipes> {
                               Text(
                                 recipe.recipeName,
                                 style:
-                                Theme.of(context).textTheme.headlineLarge,
-                              ),
+                                Theme.of(context).textTheme.headlineLarge?.copyWith(color: textColor),                              ),
                               SizedBox(
                                 height: 1.5.h,
                               ),
@@ -419,7 +421,7 @@ class _SavedRecipesState extends State<SavedRecipes> {
                                   Icon(
                                     UniconsLine.clock,
                                     size: 16.0,
-                                    color: Colors.grey.shade500,
+                                    color: iconColor,
                                   ),
                                   SizedBox(
                                     width: 1.5.w,
@@ -428,8 +430,8 @@ class _SavedRecipesState extends State<SavedRecipes> {
                                     '${recipe.prepTime.toStringAsFixed(0)} M Prep',
                                     style: Theme.of(context)
                                         .textTheme
-                                        .bodyMedium,
-                                  ),
+                                        .bodyMedium
+                                        ?.copyWith(color: textColor),                                  ),
                                 ],
                               ),
                               SizedBox(
@@ -440,7 +442,7 @@ class _SavedRecipesState extends State<SavedRecipes> {
                                   Icon(
                                     UniconsLine.clock,
                                     size: 16.0,
-                                    color: Colors.grey.shade500,
+                                    color: iconColor,
                                   ),
                                   SizedBox(
                                     width: 1.5.w,
@@ -449,8 +451,8 @@ class _SavedRecipesState extends State<SavedRecipes> {
                                     '${recipe.cookTime.toStringAsFixed(0)} M Cook',
                                     style: Theme.of(context)
                                         .textTheme
-                                        .bodyMedium,
-                                  ),
+                                        .bodyMedium
+                                        ?.copyWith(color: textColor),                                  ),
                                 ],
                               ),
                             ],
