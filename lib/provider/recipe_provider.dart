@@ -119,11 +119,11 @@ class ListOfRecipes with ChangeNotifier {
   Future<void> _seedProductsIfNeeded() async {
     if (_database == null) return;
 
-    final existingProducts = await _database!.query('products');
+    await _database!.transaction((txn) async {
+      await txn.delete('products');
 
-    if (existingProducts.isEmpty) {
+      final batch = txn.batch();
 
-      final batch = _database!.batch();
       for (final entry in _nutritionHints.entries) {
         batch.insert('products', {
           'name': entry.key,
@@ -134,30 +134,7 @@ class ListOfRecipes with ChangeNotifier {
         });
       }
       await batch.commit(noResult: true);
-      return;
-    }
-
-    for (final row in existingProducts) {
-      final calories = (row['caloriesPer100'] as num?)?.toDouble() ?? 0;
-      final proteins = (row['proteinsPer100'] as num?)?.toDouble() ?? 0;
-      final fats = (row['fatsPer100'] as num?)?.toDouble() ?? 0;
-      final carbs = (row['carbsPer100'] as num?)?.toDouble() ?? 0;
-      if (calories == 0 && proteins == 0 && fats == 0 && carbs == 0) {
-        final name = row['name'] as String? ?? '';
-        final product = _productFromIngredient(name);
-        await _database!.update(
-          'products',
-          {
-            'caloriesPer100': product.caloriesPer100,
-            'proteinsPer100': product.proteinsPer100,
-            'fatsPer100': product.fatsPer100,
-            'carbsPer100': product.carbsPer100,
-          },
-          where: 'id = ?',
-          whereArgs: [row['id']],
-        );
-      }
-    }
+    });
   }
 
     Product _productFromIngredient(String ingredient) {
