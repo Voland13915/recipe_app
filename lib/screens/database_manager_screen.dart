@@ -423,8 +423,7 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
                 style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 4),
             Text(
-              'Здесь ингредиенты добавляются вручную. Поиск в Open Food Facts доступен при добавлении ингредиента в блюдо (экран "Создать блюдо").',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+              'Здесь ингредиенты добавляются вручную. Автозаполнение использует базу USDA FoodData Central в окне добавления ингредиента к блюду (экран "Создать блюдо").',              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
             ),
             Row(
               children: [

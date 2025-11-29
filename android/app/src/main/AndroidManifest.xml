@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Allow the app to access the internet for API requests (Open Food Facts) -->
+    <!-- Allow the app to access the internet for API requests (USDA FoodData Central) -->
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="nutrition_app"
