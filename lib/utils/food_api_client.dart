@@ -38,7 +38,15 @@ class FoodApiClient {
     final ingredients = products.map((dynamic product) {
       final Map<String, dynamic> nutriments =
           (product is Map<String, dynamic> ? product['nutriments'] : null) as Map<String, dynamic>? ?? {};
-      double getNum(String key) => (nutriments[key] as num?)?.toDouble() ?? 0.0;
+      double getNum(String key) {
+        final value = nutriments[key];
+        if (value is num) return value.toDouble();
+        if (value is String) {
+          final parsed = double.tryParse(value.replaceAll(',', '.'));
+          if (parsed != null) return parsed;
+        }
+        return 0.0;
+      }
 
       return Ingredient(
         name: (product['product_name'] as String?)?.trim().isNotEmpty == true
