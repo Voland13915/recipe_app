@@ -284,19 +284,20 @@ class HomeHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<UserProfile>();
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Good Morning, Devina',
+          'Good Morning, ${user.name}',
           style: Theme.of(context).textTheme.headlineLarge,
         ),
         const Spacer(flex: 3),
-        const Expanded(
+        Expanded(
           child: ProfileImage(
             height: 50.0,
-            image:
-            'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1740&q=80',
+            image: user.profileImageUrl,
           ),
         ),
       ],

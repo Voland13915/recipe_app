@@ -12,17 +12,19 @@ class ProfileImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasImage = image.trim().isNotEmpty;
+
     return Container(
       height: height,
       decoration: BoxDecoration(
         color: Colors.grey.shade200,
         shape: BoxShape.circle,
-        image: DecorationImage(
-          image: CachedNetworkImageProvider(
-            image,
-          ),
+        image: hasImage
+            ? DecorationImage(
+          image: CachedNetworkImageProvider(image),
           fit: BoxFit.fitHeight,
-        ),
+        )
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.5),
@@ -32,6 +34,13 @@ class ProfileImage extends StatelessWidget {
           ),
         ],
       ),
+      child: !hasImage
+          ? Icon(
+        Icons.person,
+        size: height * 0.5,
+        color: Colors.grey.shade600,
+      )
+          : null,
     );
   }
 }

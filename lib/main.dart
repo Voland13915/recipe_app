@@ -17,6 +17,7 @@ void main() {
         ),
         ChangeNotifierProvider(create: (_) => SavedProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => UserProfile()),
       ],
       child: const MyApp(),
     ),

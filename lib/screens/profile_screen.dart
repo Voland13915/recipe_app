@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:unicons/unicons.dart';
 import 'package:nutrition_app/widgets/widgets.dart';  // Изменён путь
-
+import 'package:provider/provider.dart';
+import 'package:nutrition_app/provider/user_provider.dart';
 import 'app_info_screen.dart';
 import 'account_screen.dart';
 import 'settings_screen.dart';
@@ -177,24 +178,25 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<UserProfile>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ProfileImage(
             height: 20.0.h,
-            image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1740&q=80'),
+            image: user.profileImageUrl),
         const SizedBox(
           height: 10.0,
         ),
         Text(
-          'Devina Hermawan',
+          user.name,
           style: Theme.of(context).textTheme.headlineLarge,
         ),
         const SizedBox(
           height: 5.0,
         ),
-        Text('Email Address', style: Theme.of(context).textTheme.headlineMedium),
+        Text(user.email, style: Theme.of(context).textTheme.headlineMedium),
       ],
     );
   }
