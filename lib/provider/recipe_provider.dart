@@ -1141,7 +1141,7 @@ class ListOfRecipes with ChangeNotifier {
     return _recipes.firstWhere((i) => i.recipeId == id);
   }
 
-  List<dynamic> findByCategory(String categoryName) {
+  List<Recipe> findByCategory(String categoryName) {
     // нормализуем вход и сравниваем по канонической категории
     final canonical = _toCanonicalCategory(categoryName);
     final list = _recipes.where((e) => e.recipeCategory == canonical).toList();
@@ -1152,7 +1152,7 @@ class ListOfRecipes with ChangeNotifier {
     return _recipes.where((element) => element.isPopular).toList();
   }
 
-  List<dynamic> searchRecipe(String searchText) {
+  List<Recipe> searchRecipe(String searchText) {
     final q = searchText.toLowerCase();
     final list = _recipes
         .where((e) =>
