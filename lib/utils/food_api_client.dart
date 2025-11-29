@@ -10,8 +10,9 @@ class FoodApiClient {
   final http.Client _httpClient;
   static const Map<String, String> _headers = <String, String>{
     'Accept': 'application/json',
-    // Open Food Facts requires a descriptive User-Agent to keep your requests from being blocked.
-    'User-Agent': 'RecipeApp/1.0 (https://github.com/)',
+    // Open Food Facts blocks generic or missing User-Agent headers, so keep this descriptive
+    // and include a contact URL/email as recommended in their API guidelines.
+    'User-Agent': 'RecipeApp/1.0 (https://github.com/openai/recipe_app; support@recipeapp.local)',
   };
 
   /// Fetches a list of ingredients from Open Food Facts based on a text query.
@@ -33,13 +34,16 @@ class FoodApiClient {
       },
     );
 
+    print('REQUEST: $uri');
+
     http.Response response;
     try {
-      response = await _httpClient.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
-    } on TimeoutException {
-      throw Exception('Open Food Facts не отвечает. Попробуйте снова позже.');
-    } on http.ClientException catch (e) {
-      throw Exception('Не удалось подключиться к Open Food Facts: ${e.message}');
+      response = await _httpClient.get(uri, headers: _headers);
+      print('RESPONSE: ${response.statusCode}');
+    } catch (e, st) {
+      print('HTTP ERROR: $e');
+      print(st);
+      rethrow; // чтобы увидеть ошибку и в логах, и в UI
     }
 
     if (response.statusCode != 200) {
