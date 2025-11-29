@@ -166,6 +166,7 @@ class ListOfRecipes with ChangeNotifier {
         );
       }
     }
+  }
 
     Product _productFromIngredient(String ingredient) {
       final normalized = ingredient.toLowerCase();
