@@ -1,4 +1,5 @@
 // recipe_screen
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:unicons/unicons.dart';
@@ -56,43 +57,61 @@ class _RecipeHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rawImage = recipe.recipeImage;
-    final imageUrl = rawImage.trim();
-    final hasImage = imageUrl.isNotEmpty && imageUrl.toLowerCase() != 'null';
-    final heroImageUrl = hasImage
+    final imageUrl = recipe.recipeImage.trim();
+    final heroImageUrl = (imageUrl.isNotEmpty && imageUrl.toLowerCase() != 'null')
         ? imageUrl
         : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200';
+    const expandedHeight = 280.0;
     return SliverAppBar(
-      expandedHeight: 280.0,
+      expandedHeight: expandedHeight,
       pinned: true,
       stretch: true,
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          recipe.recipeName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              heroImageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(                color: Colors.grey.shade300,
-                child: const Icon(Icons.image_not_supported),
-              ),
-            ),
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black54],
+        flexibleSpace: LayoutBuilder(
+            builder: (context, constraints) {
+              final progress = ((constraints.maxHeight - kToolbarHeight) /
+                  (expandedHeight - kToolbarHeight))
+                  .clamp(0.0, 1.0);
+
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                Image.network(
+                heroImageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey.shade300,
+                  child: const Icon(Icons.image_not_supported),
                 ),
               ),
-            ),
-          ],
-        ),
+              Container(
+              decoration: const BoxDecoration(
+              gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Colors.black54],
+              ),
+                ),
+              ),
+                  Positioned(
+                    left: 16.0,
+                    right: 16.0,
+                    bottom: 16.0,
+                    child: Opacity(
+                      opacity: progress,
+                      child: Text(
+                        recipe.recipeName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
       ),
     );
   }
