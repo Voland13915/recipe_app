@@ -57,8 +57,47 @@ class CustomTheme {
       foregroundColor: Colors.white,
     ),
     iconTheme: const IconThemeData(color: Color(0xff55d4c3)),
-    textTheme: GoogleFonts.openSansTextTheme(
-      ThemeData.dark().textTheme,
+    textTheme: TextTheme(
+      displayLarge: GoogleFonts.openSans(
+        fontSize: 22.0.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.0,
+        color: Colors.white,
+      ),
+      headlineLarge: GoogleFonts.openSans(
+        fontSize: 12.0.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.0,
+        color: Colors.white,
+      ),
+      displaySmall: GoogleFonts.openSans(
+        fontSize: 10.0.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.0,
+        color: Colors.white,
+      ),
+      displayMedium: GoogleFonts.openSans(
+        fontSize: 12.0.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.0,
+        color: Colors.white,
+      ),
+      bodyLarge: GoogleFonts.openSans(
+        fontSize: 10.0.sp,
+        letterSpacing: 1.0,
+        fontWeight: FontWeight.w400,
+        color: Colors.white,
+      ),
+      bodyMedium: GoogleFonts.openSans(
+        fontSize: 10.0.sp,
+        letterSpacing: 1.0,
+        color: Colors.white,
+      ),
+      headlineMedium: GoogleFonts.openSans(
+        fontSize: 12.0.sp,
+        letterSpacing: 1.0,
+        color: Colors.white,
+      ),
     ),
     switchTheme: SwitchThemeData(
       thumbColor: MaterialStateProperty.resolveWith(
