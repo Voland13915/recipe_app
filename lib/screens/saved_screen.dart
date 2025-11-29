@@ -1,5 +1,4 @@
 // saved_screen
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:nutrition_app/custom_navbar.dart';  // Изменён путь
@@ -42,36 +41,28 @@ class SavedRecipes extends StatefulWidget {
 
 class _SavedRecipesState extends State<SavedRecipes> {
   Set<String> _selectedCategories = {};
-  RangeValues? _prepTimeRange;
-  RangeValues? _cookTimeRange;
+  double? _prepTimeMax;
+  double? _cookTimeMax;
+  final TextEditingController _prepTimeController = TextEditingController();
+  final TextEditingController _cookTimeController = TextEditingController();
 
-  RangeValues _normalizeRange(RangeValues? current, double maxValue) {
-    if (maxValue <= 0) return const RangeValues(0, 0);
-
-    if (current == null) {
-      return RangeValues(0, maxValue);
-    }
-
-    final start = current.start.clamp(0, maxValue).toDouble();
-    final end = current.end.clamp(start, maxValue).toDouble();
-
-    return RangeValues(start, end);
+  @override
+  void dispose() {
+    _prepTimeController.dispose();
+    _cookTimeController.dispose();
+    super.dispose();
   }
 
   List<saved_model.SavedRecipes> _filterRecipes(
       List<saved_model.SavedRecipes> recipes,
-      RangeValues prepRange,
-      RangeValues cookRange,
-      ) {
+      {double? prepMax, double? cookMax}) {
     return recipes.where((recipe) {
       final matchesCategory = _selectedCategories.isEmpty ||
           _selectedCategories.contains(recipe.recipeCategory);
 
-      final matchesPrep = recipe.prepTime >= prepRange.start &&
-          recipe.prepTime <= prepRange.end;
+      final matchesPrep = prepMax == null || recipe.prepTime <= prepMax;
 
-      final matchesCook = recipe.cookTime >= cookRange.start &&
-          recipe.cookTime <= cookRange.end;
+      final matchesCook = cookMax == null || recipe.cookTime <= cookMax;
 
       return matchesCategory && matchesPrep && matchesCook;
     }).toList();
@@ -87,29 +78,16 @@ class _SavedRecipesState extends State<SavedRecipes> {
         .toList()
       ..sort();
 
-    final maxPrep = savedRecipes.isEmpty
-        ? 0.0
-        : savedRecipes.map((recipe) => recipe.prepTime).reduce(max);
-    final maxCook = savedRecipes.isEmpty
-        ? 0.0
-        : savedRecipes.map((recipe) => recipe.cookTime).reduce(max);
-
-    final prepRange = _normalizeRange(
-      _prepTimeRange,
-      maxPrep > 0 ? maxPrep : 60,
-    );
-    final cookRange = _normalizeRange(
-      _cookTimeRange,
-      maxCook > 0 ? maxCook : 60,
-    );
+    _prepTimeController.text =
+    _prepTimeMax != null ? _prepTimeMax!.toStringAsFixed(0) : '';
+    _cookTimeController.text =
+    _cookTimeMax != null ? _cookTimeMax!.toStringAsFixed(0) : '';
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) {
         var tempCategories = {..._selectedCategories};
-        var tempPrepRange = prepRange;
-        var tempCookRange = cookRange;
 
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -181,46 +159,40 @@ class _SavedRecipesState extends State<SavedRecipes> {
                     ),
                   const SizedBox(height: 16.0),
                   Text(
-                    'Prep time (min)',
+                    'Prep time up to (min)',
                     style: Theme.of(context)
                         .textTheme
                         .labelLarge
                         ?.copyWith(color: Colors.grey.shade700),
                   ),
-                  RangeSlider(
-                    values: tempPrepRange,
-                    min: 0,
-                    max: max(prepRange.end, 5),
-                    labels: RangeLabels(
-                      '${tempPrepRange.start.toStringAsFixed(0)}m',
-                      '${tempPrepRange.end.toStringAsFixed(0)}m',
+                  const SizedBox(height: 8.0),
+                  TextField(
+                    controller: _prepTimeController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      hintText: 'Например, 30',
                     ),
                     onChanged: (value) {
-                      setModalState(() {
-                        tempPrepRange = value;
-                      });
+                      setModalState(() {});
                     },
                   ),
                   const SizedBox(height: 8.0),
                   Text(
-                    'Cook time (min)',
+                    'Cook time up to (min)',
                     style: Theme.of(context)
                         .textTheme
                         .labelLarge
                         ?.copyWith(color: Colors.grey.shade700),
                   ),
-                  RangeSlider(
-                    values: tempCookRange,
-                    min: 0,
-                    max: max(cookRange.end, 5),
-                    labels: RangeLabels(
-                      '${tempCookRange.start.toStringAsFixed(0)}m',
-                      '${tempCookRange.end.toStringAsFixed(0)}m',
+                  const SizedBox(height: 8.0),
+                  TextField(
+                    controller: _cookTimeController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      hintText: 'Например, 45',
                     ),
                     onChanged: (value) {
-                      setModalState(() {
-                        tempCookRange = value;
-                      });
+                      setModalState(() {});
                     },
                   ),
                   const SizedBox(height: 16.0),
@@ -231,8 +203,10 @@ class _SavedRecipesState extends State<SavedRecipes> {
                           Navigator.pop(context);
                           setState(() {
                             _selectedCategories = {};
-                            _prepTimeRange = null;
-                            _cookTimeRange = null;
+                            _prepTimeMax = null;
+                            _cookTimeMax = null;
+                            _prepTimeController.clear();
+                            _cookTimeController.clear();
                           });
                         },
                         child: const Text('Reset'),
@@ -240,10 +214,18 @@ class _SavedRecipesState extends State<SavedRecipes> {
                       const Spacer(),
                       ElevatedButton(
                         onPressed: () {
+                          final parsedPrep = double.tryParse(
+                              _prepTimeController.text.trim().isEmpty
+                                  ? ''
+                                  : _prepTimeController.text.trim());
+                          final parsedCook = double.tryParse(
+                              _cookTimeController.text.trim().isEmpty
+                                  ? ''
+                                  : _cookTimeController.text.trim());
                           setState(() {
                             _selectedCategories = tempCategories;
-                            _prepTimeRange = tempPrepRange;
-                            _cookTimeRange = tempCookRange;
+                            _prepTimeMax = parsedPrep;
+                            _cookTimeMax = parsedCook;
                           });
                           Navigator.pop(context);
                         },
@@ -297,26 +279,10 @@ class _SavedRecipesState extends State<SavedRecipes> {
     final savedProvider = Provider.of<SavedProvider>(context);
     final savedRecipes = savedProvider.getSaved.values.toList();
 
-    final maxPrep = savedRecipes.isEmpty
-        ? 0.0
-        : savedRecipes.map((recipe) => recipe.prepTime).reduce(max);
-    final maxCook = savedRecipes.isEmpty
-        ? 0.0
-        : savedRecipes.map((recipe) => recipe.cookTime).reduce(max);
-
-    final prepRange = _normalizeRange(
-      _prepTimeRange,
-      maxPrep > 0 ? maxPrep : 60,
-    );
-    final cookRange = _normalizeRange(
-      _cookTimeRange,
-      maxCook > 0 ? maxCook : 60,
-    );
-
     final filteredRecipes = _filterRecipes(
       savedRecipes,
-      prepRange,
-      cookRange,
+      prepMax: _prepTimeMax,
+      cookMax: _cookTimeMax,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,166 +300,168 @@ class _SavedRecipesState extends State<SavedRecipes> {
         TabRow(
           onFilterTap: () => _openFilterSheet(context, savedRecipes),
         ),
-    if (_selectedCategories.isNotEmpty ||
-    _prepTimeRange != null ||
-    _cookTimeRange != null)
-    Padding(
-    padding: const EdgeInsets.only(bottom: 8.0),
-    child: Wrap(
-    spacing: 8.0,
-    runSpacing: 8.0,
-    children: [
-    ..._selectedCategories.map(
-    (category) => Chip(
-    label: Text(category),
-    onDeleted: () => setState(() {
-    _selectedCategories.remove(category);
-    }),
-    ),
-    ),
-    if (_prepTimeRange != null)
-    Chip(
-    label: Text(
-    'Prep: ${prepRange.start.toStringAsFixed(0)}-${prepRange.end.toStringAsFixed(0)}m'),
-    onDeleted: () => setState(() {
-    _prepTimeRange = null;
-    }),
-    ),
-    if (_cookTimeRange != null)
-    Chip(
-    label: Text(
-    'Cook: ${cookRange.start.toStringAsFixed(0)}-${cookRange.end.toStringAsFixed(0)}m'),
-    onDeleted: () => setState(() {
-    _cookTimeRange = null;
-    }),
-    ),
-    ],
-    ),
-    ),
-    if (filteredRecipes.isEmpty)
-    Padding(
-    padding: const EdgeInsets.only(top: 16.0),
-    child: Text(
-    'Нет рецептов, подходящих под фильтры.',
-    style: Theme.of(context)
-        .textTheme
-        .bodyLarge
-        ?.copyWith(color: Colors.grey.shade700),
-    ),
-    )
-    else
-    ListView.separated(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    separatorBuilder: (BuildContext context, int index) {
-    return const SizedBox(
-    height: 15.0,
-    );
-    },
-    itemCount: filteredRecipes.length,
-    itemBuilder: (context, index) {
-    var recipe = filteredRecipes[index];
-    return Dismissible(
-    direction: DismissDirection.endToStart,
-    background: Container(
-    alignment: AlignmentDirectional.centerEnd,
-    color: Colors.red,
-    height: 20.0,
-    padding: EdgeInsets.zero,
-    child: Padding(
-    padding: const EdgeInsets.fromLTRB(0.0, 0.0, 15.0, 0.0),
-    child: Icon(
-    UniconsLine.trash,
-    color: Colors.white,
-    size: 20.sp,
+        if (_selectedCategories.isNotEmpty ||
+            _prepTimeMax != null ||
+            _cookTimeMax != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: [
+                ..._selectedCategories.map(
+                      (category) => Chip(
+                    label: Text(category),
+                    onDeleted: () => setState(() {
+                      _selectedCategories.remove(category);
+                    }),
+                  ),
+                ),
+                if (_prepTimeMax != null)
+                  Chip(
+                    label: Text('Prep: ≤${_prepTimeMax?.toStringAsFixed(0)}m'),
+                    onDeleted: () => setState(() {
+                      _prepTimeMax = null;
+                    }),
+                  ),
+                if (_cookTimeMax != null)
+                  Chip(
+                    label: Text('Cook: ≤${_cookTimeMax?.toStringAsFixed(0)}m'),
+                    onDeleted: () => setState(() {
+                      _cookTimeMax = null;
+                    }),
+                  ),
+              ],
+            ),
+          ),
+        if (filteredRecipes.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0),
+            child: Text(
+              'Нет рецептов, подходящих под фильтры.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge
+                  ?.copyWith(color: Colors.grey.shade700),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            separatorBuilder: (BuildContext context, int index) {
+              return const SizedBox(
+                height: 15.0,
+              );
+            },
+            itemCount: filteredRecipes.length,
+            itemBuilder: (context, index) {
+              var recipe = filteredRecipes[index];
+              return Dismissible(
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: AlignmentDirectional.centerEnd,
+                  color: Colors.red,
+                  height: 20.0,
+                  padding: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0.0, 0.0, 15.0, 0.0),
+                    child: Icon(
+                      UniconsLine.trash,
+                      color: Colors.white,
+                      size: 20.sp,
                     ),
                   ),
-    ),
-    key: ValueKey(recipe.recipeId),
-    onDismissed: (direction) {
-    setState(() {
-    savedProvider.removeRecipe(recipe.recipeId);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-    content: Text('${recipe.recipeName} deleted'),
-    ),
-    );
-    },
-    child: InkWell(
-    onTap: () => _openRecipe(recipe),
-    child: SizedBox(
-    height: 20.0.h,
-    child: Material(
-    color: Colors.white,
-    elevation: 2.0,
-    child: Row(
-    children: [
-    ReusableNetworkImage(
-    imageUrl: recipe.recipeImage,
-    height: 20.0.h,
-    width: 20.0.h,
-    ),
-    SizedBox(
-    width: 2.0.h,
-    ),
-    Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    Text(
-    recipe.recipeName,
-    style: Theme.of(context).textTheme.headlineLarge,
-    ),
-    SizedBox(
-    height: 1.5.h,
-    ),
-    Row(
-    children: [
-    Icon(
-    UniconsLine.clock,
-    size: 16.0,
-    color: Colors.grey.shade500,
-    ),
-    SizedBox(
-    width: 1.5.w,
-    ),
-    Text(
-    '${recipe.prepTime.toStringAsFixed(0)} M Prep',
-    style: Theme.of(context).textTheme.bodyMedium,
-    ),
-    ],
-    ),
-    SizedBox(
-    height: 1.0.h,
-    ),
-    Row(
-    children: [
-    Icon(
-    UniconsLine.clock,
-    size: 16.0,
-    color: Colors.grey.shade500,
-    ),
-    SizedBox(
-    width: 1.5.w,
-    ),
-    Text(
-    '${recipe.cookTime.toStringAsFixed(0)} M Cook',
-    style: Theme.of(context).textTheme.bodyMedium,
-    ),
-    ],
-    ),
-    ],
-    ),
-    ],
+                ),
+                key: ValueKey(recipe.recipeId),
+                onDismissed: (direction) {
+                  setState(() {
+                    savedProvider.removeRecipe(recipe.recipeId);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${recipe.recipeName} deleted'),
+                    ),
+                  );
+                },
+                child: InkWell(
+                  onTap: () => _openRecipe(recipe),
+                  child: SizedBox(
+                    height: 20.0.h,
+                    child: Material(
+                      color: Colors.white,
+                      elevation: 2.0,
+                      child: Row(
+                        children: [
+                          ReusableNetworkImage(
+                            imageUrl: recipe.recipeImage,
+                            height: 20.0.h,
+                            width: 20.0.h,
+                          ),
+                          SizedBox(
+                            width: 2.0.h,
+                          ),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                recipe.recipeName,
+                                style:
+                                Theme.of(context).textTheme.headlineLarge,
+                              ),
+                              SizedBox(
+                                height: 1.5.h,
+                              ),
+                              Row(
+                                children: [
+                                  Icon(
+                                    UniconsLine.clock,
+                                    size: 16.0,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  SizedBox(
+                                    width: 1.5.w,
+                                  ),
+                                  Text(
+                                    '${recipe.prepTime.toStringAsFixed(0)} M Prep',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: 1.0.h,
+                              ),
+                              Row(
+                                children: [
+                                  Icon(
+                                    UniconsLine.clock,
+                                    size: 16.0,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  SizedBox(
+                                    width: 1.5.w,
+                                  ),
+                                  Text(
+                                    '${recipe.cookTime.toStringAsFixed(0)} M Cook',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
-    ),
-    );
-    },
-    ),
+                ),
+              );
+            },
+          ),
       ],
     );
   }
