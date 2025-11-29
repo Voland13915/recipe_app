@@ -43,6 +43,11 @@ class CustomTheme {
     iconTheme: const IconThemeData(
       color: Color(0xff084f57),
     ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      selectedItemColor: Color(0xff084f57),
+      unselectedItemColor: Colors.black54,
+    ),
   );
 
   static final darkTheme = ThemeData.dark().copyWith(
@@ -110,6 +115,11 @@ class CustomTheme {
             ? const Color(0xff55d4c3).withOpacity(0.4)
             : Colors.grey.shade800,
       ),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xff101f22),
+      selectedItemColor: Color(0xff55d4c3),
+      unselectedItemColor: Colors.white70,
     ),
   );
 }

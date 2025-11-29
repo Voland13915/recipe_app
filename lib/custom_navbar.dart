@@ -37,16 +37,18 @@ class _CustomNavBarState extends State<CustomNavBar>
 
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        elevation: 4.0,
+        backgroundColor:
+        Theme.of(context).bottomNavigationBarTheme.backgroundColor,        elevation: 4.0,
         currentIndex: selectedIndex,
         onTap: _onItemTapped,
         showSelectedLabels: true,
         selectedFontSize: 10.0.sp,
         iconSize: 18.sp,
         showUnselectedLabels: true,
-        selectedItemColor: Theme.of(context).iconTheme.color,
-        type: BottomNavigationBarType.fixed,
+        selectedItemColor:
+        Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+        unselectedItemColor:
+        Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,        type: BottomNavigationBarType.fixed,
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: const Icon(UniconsLine.home),
