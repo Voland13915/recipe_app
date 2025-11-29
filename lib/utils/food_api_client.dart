@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:http/http.dart' as http;
 import 'package:nutrition_app/models/ingredient.dart';
@@ -7,6 +8,11 @@ class FoodApiClient {
   FoodApiClient({http.Client? httpClient}) : _httpClient = httpClient ?? http.Client();
 
   final http.Client _httpClient;
+  static const Map<String, String> _headers = <String, String>{
+    'Accept': 'application/json',
+    // Open Food Facts requires a descriptive User-Agent to keep your requests from being blocked.
+    'User-Agent': 'RecipeApp/1.0 (https://github.com/)',
+  };
 
   /// Fetches a list of ingredients from Open Food Facts based on a text query.
   ///
@@ -27,7 +33,15 @@ class FoodApiClient {
       },
     );
 
-    final response = await _httpClient.get(uri);
+    http.Response response;
+    try {
+      response = await _httpClient.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
+    } on TimeoutException {
+      throw Exception('Open Food Facts не отвечает. Попробуйте снова позже.');
+    } on http.ClientException catch (e) {
+      throw Exception('Не удалось подключиться к Open Food Facts: ${e.message}');
+    }
+
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch products (${response.statusCode})');
     }
