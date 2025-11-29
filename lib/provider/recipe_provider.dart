@@ -122,25 +122,17 @@ class ListOfRecipes with ChangeNotifier {
     final existingProducts = await _database!.query('products');
 
     if (existingProducts.isEmpty) {
-      final uniqueIngredients = <String>{};
-      for (final recipe in _seedRecipes) {
-        uniqueIngredients.addAll(recipe.recipeIngredients);
-      }
-
-      if (uniqueIngredients.isEmpty) return;
 
       final batch = _database!.batch();
-      for (final ingredient in uniqueIngredients) {
-        final product = _productFromIngredient(ingredient);
+      for (final entry in _nutritionHints.entries) {
         batch.insert('products', {
-          'name': ingredient,
-          'caloriesPer100': product.caloriesPer100,
-          'proteinsPer100': product.proteinsPer100,
-          'fatsPer100': product.fatsPer100,
-          'carbsPer100': product.carbsPer100,
+          'name': entry.key,
+          'caloriesPer100': entry.value.caloriesPer100,
+          'proteinsPer100': entry.value.proteinsPer100,
+          'fatsPer100': entry.value.fatsPer100,
+          'carbsPer100': entry.value.carbsPer100,
         });
       }
-
       await batch.commit(noResult: true);
       return;
     }
