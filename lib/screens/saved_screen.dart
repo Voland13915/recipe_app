@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:nutrition_app/custom_navbar.dart';  // Изменён путь
 import 'package:nutrition_app/models/models.dart';
+import 'package:nutrition_app/utils/category_list.dart';
 import 'package:nutrition_app/models/saved_recipes.dart' as saved_model;
 import 'package:nutrition_app/provider/provider.dart';  // Изменён путь
 import 'package:nutrition_app/widgets/widgets.dart';  // Изменён путь
@@ -72,8 +73,8 @@ class _SavedRecipesState extends State<SavedRecipes> {
       BuildContext context,
       List<saved_model.SavedRecipes> savedRecipes,
       ) {
-    final availableCategories = savedRecipes
-        .map((recipe) => recipe.recipeCategory)
+    final availableCategories = items
+        .map((category) => category.category)
         .toSet()
         .toList()
       ..sort();
