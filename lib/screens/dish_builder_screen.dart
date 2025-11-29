@@ -151,20 +151,21 @@ class DishBuilderScreen extends StatelessWidget {
     );
   }
 
-  // Диалог для добавления ингредиента через поиск по базе
+  // Диалог для добавления ингредиента через автозаполнение БЖУ по названию
   void _showAddIngredientDialog(BuildContext context, DishProvider provider) {
-    final TextEditingController searchController = TextEditingController();
     final FoodApiClient apiClient = FoodApiClient();
-    List<Ingredient> results = <Ingredient>[];
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController quantityController = TextEditingController(text: '100');
+    final TextEditingController caloriesController = TextEditingController();
+    final TextEditingController proteinsController = TextEditingController();
+    final TextEditingController fatsController = TextEditingController();
+    final TextEditingController carbsController = TextEditingController();
     bool isLoading = false;
     String? errorMessage;
 
-    Future<void> search(String query, void Function(void Function()) setState) async {
+    Future<void> autofill(String query, void Function(void Function()) setState) async {
       if (query.trim().isEmpty) {
-        setState(() {
-          errorMessage = 'Введите название продукта';
-          results = <Ingredient>[];
-        });
+      setState(() => errorMessage = 'Введите название продукта');
         return;
       }
 
@@ -174,16 +175,27 @@ class DishBuilderScreen extends StatelessWidget {
       });
 
       try {
-        final List<Ingredient> fetchedResults = await apiClient.searchIngredients(query);
-        setState(() {
-          results = fetchedResults;
-          errorMessage = fetchedResults.isEmpty ? 'Ничего не найдено' : null;
-        });
+        final results = await apiClient.searchIngredients(query);
+        if (results.isEmpty) {
+          setState(() {
+            errorMessage = 'Ничего не найдено';
+            caloriesController.clear();
+            proteinsController.clear();
+            fatsController.clear();
+            carbsController.clear();
+          });
+        } else {
+          final match = results.first;
+          setState(() {
+            nameController.text = match.name;
+            caloriesController.text = match.caloriesPer100g.toStringAsFixed(0);
+            proteinsController.text = match.proteinsPer100g.toStringAsFixed(1);
+            fatsController.text = match.fatsPer100g.toStringAsFixed(1);
+            carbsController.text = match.carbsPer100g.toStringAsFixed(1);
+          });
+        }
       } catch (e) {
-        setState(() {
-          errorMessage = 'Не удалось загрузить продукты. Проверьте подключение.';
-          results = <Ingredient>[];
-        });
+        setState(() => isLoading = false);
       } finally {
         setState(() {
           isLoading = false;
@@ -194,70 +206,112 @@ class DishBuilderScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Найти ингредиент'),
+        title: const Text('Новый ингредиент'),
         content: StatefulBuilder(
           builder: (context, setState) {
-            return SizedBox(
-              width: double.maxFinite,
+            return SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
+                    controller: nameController,                    decoration: InputDecoration(
                       labelText: 'Название продукта',
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.search),
-                        onPressed: () => search(searchController.text, setState),
+                        onPressed: () => autofill(nameController.text, setState),
                       ),
                     ),
-                    onSubmitted: (value) => search(value, setState),
+                    onSubmitted: (value) => autofill(value, setState),
                   ),
                   const SizedBox(height: 12),
                   if (isLoading) const LinearProgressIndicator(),
                   if (errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        errorMessage!,
-                        style: const TextStyle(color: Colors.red),
-                      ),
+                      child: Text(errorMessage!, style: const TextStyle(color: Colors.red)),
                     ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: 300,
-                    child: results.isEmpty && !isLoading && errorMessage == null
-                        ? const Center(child: Text('Начните поиск продукта'))
-                        : ListView.builder(
-                      itemCount: results.length,
-                      itemBuilder: (context, index) {
-                        final ingredient = results[index];
-                        return ListTile(
-                          title: Text(ingredient.name),
-                          subtitle: Text(
-                            'Ккал: ${ingredient.caloriesPer100g.toStringAsFixed(0)}, Б: ${ingredient.proteinsPer100g.toStringAsFixed(1)}, Ж: ${ingredient.fatsPer100g.toStringAsFixed(1)}, У: ${ingredient.carbsPer100g.toStringAsFixed(1)} (на 100г)',
-                          ),
-                          onTap: () {
-                            provider.addIngredient(
-                              Ingredient(
-                                name: ingredient.name,
-                                caloriesPer100g: ingredient.caloriesPer100g,
-                                proteinsPer100g: ingredient.proteinsPer100g,
-                                fatsPer100g: ingredient.fatsPer100g,
-                                carbsPer100g: ingredient.carbsPer100g,
-                              ),
-                            );
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: quantityController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Количество (г)'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: caloriesController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Калорий на 100г'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: proteinsController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Белки на 100г'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: fatsController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Жиры на 100г'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: carbsController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Углеводы на 100г'),
                   ),
                 ],
               ),
             );
           },
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+
+              final quantity = double.tryParse(quantityController.text.replaceAll(',', '.')) ?? 100.0;
+              final calories = double.tryParse(caloriesController.text.replaceAll(',', '.')) ?? 0.0;
+              final proteins = double.tryParse(proteinsController.text.replaceAll(',', '.')) ?? 0.0;
+              final fats = double.tryParse(fatsController.text.replaceAll(',', '.')) ?? 0.0;
+              final carbs = double.tryParse(carbsController.text.replaceAll(',', '.')) ?? 0.0;
+
+              provider.addIngredient(
+                Ingredient(
+                  name: name,
+                  caloriesPer100g: calories,
+                  proteinsPer100g: proteins,
+                  fatsPer100g: fats,
+                  carbsPer100g: carbs,
+                  quantity: quantity,
+                ),
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Добавить'),
+          ),
+        ],
       ),
     );
   }

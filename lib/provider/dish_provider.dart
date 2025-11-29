@@ -25,19 +25,16 @@ class DishProvider with ChangeNotifier {
   }
 
   double calculateTotalCalories() {
-    return ingredients.fold(0.0, (sum, ing) => sum + (ing.caloriesPer100g * (ing.quantity ?? 0) / 100));
-  }
+    return ingredients.fold(0.0, (sum, ing) => sum + (ing.caloriesPer100g * ing.quantity / 100));  }
 
   double calculateTotalProteins() {
-    return ingredients.fold(0.0, (sum, ing) => sum + (ing.proteinsPer100g * (ing.quantity ?? 0) / 100));
-  }
+    return ingredients.fold(0.0, (sum, ing) => sum + (ing.proteinsPer100g * ing.quantity / 100));  }
 
   double calculateTotalFats() {
-    return ingredients.fold(0.0, (sum, ing) => sum + (ing.fatsPer100g * (ing.quantity ?? 0) / 100));
-  }
+    return ingredients.fold(0.0, (sum, ing) => sum + (ing.fatsPer100g * ing.quantity / 100));  }
 
   double calculateTotalCarbs() {
-    return ingredients.fold(0.0, (sum, ing) => sum + (ing.carbsPer100g * (ing.quantity ?? 0) / 100));
+    return ingredients.fold(0.0, (sum, ing) => sum + (ing.carbsPer100g * ing.quantity / 100));
   }
 
   void setTargetCalories(double value) {

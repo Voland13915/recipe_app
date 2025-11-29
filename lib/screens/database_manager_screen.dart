@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nutrition_app/models/models.dart';
 import 'package:nutrition_app/provider/provider.dart';
+import 'package:nutrition_app/utils/food_api_client.dart';
 import 'package:nutrition_app/utils/nutrition_engine.dart';
 import 'package:provider/provider.dart';
 
@@ -324,11 +325,14 @@ class ProductFormSheet extends StatefulWidget {
 
 class _ProductFormSheetState extends State<ProductFormSheet> {
   final _formKey = GlobalKey<FormState>();
+  final FoodApiClient _foodApiClient = FoodApiClient();
   late final TextEditingController _nameController;
   late final TextEditingController _caloriesController;
   late final TextEditingController _proteinsController;
   late final TextEditingController _fatsController;
   late final TextEditingController _carbsController;
+  bool _isSearching = false;
+  String? _searchMessage;
 
   @override
   void initState() {
@@ -368,6 +372,44 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
     Navigator.pop(context);
   }
 
+  Future<void> _autofillFromApi() async {
+    final query = _nameController.text.trim();
+    if (query.isEmpty) {
+      setState(() => _searchMessage = 'Введите название, чтобы найти значения.');
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _searchMessage = null;
+    });
+
+    try {
+      final results = await _foodApiClient.searchIngredients(query);
+      if (!mounted) return;
+
+      if (results.isEmpty) {
+        setState(() => _searchMessage = 'Ничего не найдено по запросу "$query".');
+        return;
+      }
+
+      final ingredient = results.first;
+      _caloriesController.text = ingredient.caloriesPer100g.toStringAsFixed(1);
+      _proteinsController.text = ingredient.proteinsPer100g.toStringAsFixed(1);
+      _fatsController.text = ingredient.fatsPer100g.toStringAsFixed(1);
+      _carbsController.text = ingredient.carbsPer100g.toStringAsFixed(1);
+
+      setState(() => _searchMessage = 'Поля заполнены автоматически. Проверьте перед сохранением.');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _searchMessage = 'Ошибка при запросе: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSearching = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -379,11 +421,44 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
           children: [
             Text(widget.initialProduct == null ? 'Новый ингредиент' : 'Редактировать ингредиент',
                 style: Theme.of(context).textTheme.headlineSmall),
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Название'),
-              validator: (value) => (value == null || value.isEmpty) ? 'Введите название' : null,
+            const SizedBox(height: 4),
+            Text(
+              'Здесь ингредиенты добавляются вручную. Поиск в Open Food Facts доступен при добавлении ингредиента в блюдо (экран "Создать блюдо").',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
             ),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Название'),
+                    validator: (value) => (value == null || value.isEmpty) ? 'Введите название' : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _isSearching ? null : _autofillFromApi,
+                  tooltip: 'Автоподстановка из базы',
+                  icon: _isSearching
+                      ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                      : const Icon(Icons.search),
+                ),
+              ],
+            ),
+            if (_searchMessage != null) ...[
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _searchMessage!,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ],
             Row(
               children: [
                 Expanded(

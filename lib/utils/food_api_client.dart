@@ -15,6 +15,8 @@ class FoodApiClient {
   Future<List<Ingredient>> searchIngredients(String query) async {
     if (query.trim().isEmpty) return [];
 
+    final normalizedQuery = _normalize(query);
+
     final uri = Uri.parse('https://world.openfoodfacts.org/cgi/search.pl').replace(
       queryParameters: <String, String>{
         'search_terms': query,
@@ -33,7 +35,7 @@ class FoodApiClient {
     final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
     final products = (data['products'] as List<dynamic>?) ?? <dynamic>[];
 
-    return products.map((dynamic product) {
+    final ingredients = products.map((dynamic product) {
       final Map<String, dynamic> nutriments =
           (product is Map<String, dynamic> ? product['nutriments'] : null) as Map<String, dynamic>? ?? {};
       double getNum(String key) => (nutriments[key] as num?)?.toDouble() ?? 0.0;
@@ -48,5 +50,19 @@ class FoodApiClient {
         carbsPer100g: getNum('carbohydrates_100g'),
       );
     }).where((ingredient) => ingredient.name.trim().isNotEmpty).toList();
+
+    ingredients.sort((a, b) => _scoreMatch(a.name, normalizedQuery).compareTo(_scoreMatch(b.name, normalizedQuery)));
+    return ingredients;
+  }
+
+  String _normalize(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-zа-яё0-9]+', caseSensitive: false), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+
+  int _scoreMatch(String name, String normalizedQuery) {
+    final normalizedName = _normalize(name);
+    if (normalizedName == normalizedQuery) return 0; // exact match
+    if (normalizedName.startsWith(normalizedQuery)) return 1; // starts with query
+    if (normalizedQuery.isNotEmpty && normalizedName.split(' ').contains(normalizedQuery)) return 2; // full word match
+    return 3 + normalizedName.length; // fallback: keep deterministic ordering
   }
 }
