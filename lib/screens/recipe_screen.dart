@@ -71,8 +71,14 @@ class _RecipeHero extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             CachedNetworkImage(
-              imageUrl: recipe.recipeImage,
+              imageUrl: recipe.recipeImage.isNotEmpty
+                  ? recipe.recipeImage
+                  : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200',
               fit: BoxFit.cover,
+              errorWidget: (context, url, error) => Container(
+                color: Colors.grey.shade300,
+                child: const Icon(Icons.image_not_supported),
+              ),
             ),
             Container(
               decoration: const BoxDecoration(

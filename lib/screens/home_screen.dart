@@ -389,7 +389,7 @@ class HomeStack extends StatelessWidget {
               width: 180.0,
               height: 110.0,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black87.withOpacity(0.2),
@@ -401,49 +401,75 @@ class HomeStack extends StatelessWidget {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      text,
-                      style: Theme.of(context).textTheme.headlineLarge,
-                    ),
-                    const SizedBox(height: 5.0),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        const Icon(UniconsLine.clock),
-                        const SizedBox(width: 5.0),
-                        Text(
-                          '${prepTime + cookTime} M Total',
-                          style: Theme.of(context)
-                              .textTheme
-                              .displaySmall!
-                              .copyWith(color: Colors.black38),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        const Icon(UniconsLine.star),
-                        const SizedBox(width: 5.0),
-                        Text(
-                          recipeReview.toStringAsFixed(0),
-                          style: Theme.of(context)
-                              .textTheme
-                              .displaySmall!
-                              .copyWith(color: Colors.black38),
-                        ),
-                      ],
-                    ),
-                  ],
+                child: _PopularCardContent(
+                  title: text,
+                  totalTime: prepTime + cookTime,
+                  rating: recipeReview,
                 ),
               ),
             ),
           )
         ],
       ),
+    );
+  }
+}
+
+class _PopularCardContent extends StatelessWidget {
+  const _PopularCardContent({
+    required this.title,
+    required this.totalTime,
+    required this.rating,
+  });
+
+  final String title;
+  final double totalTime;
+  final double rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final secondaryColor =
+    Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.headlineLarge,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 5.0),
+        const Spacer(),
+        Row(
+          children: [
+            const Icon(UniconsLine.clock),
+            const SizedBox(width: 5.0),
+            Text(
+              '${totalTime.toStringAsFixed(0)} M Total',
+              style: Theme.of(context)
+                  .textTheme
+                  .displaySmall
+                  ?.copyWith(color: secondaryColor),
+            ),
+          ],
+        ),
+        const Spacer(),
+        Row(
+          children: [
+            const Icon(UniconsLine.star),
+            const SizedBox(width: 5.0),
+            Text(
+              rating.toStringAsFixed(0),
+              style: Theme.of(context)
+                  .textTheme
+                  .displaySmall
+                  ?.copyWith(color: secondaryColor),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
