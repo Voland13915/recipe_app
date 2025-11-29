@@ -57,6 +57,10 @@ class _RecipeHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = recipe.recipeImage.trim();
+    final heroImageUrl = (imageUrl.isNotEmpty && imageUrl.toLowerCase() != 'null')
+        ? imageUrl
+        : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200';
     return SliverAppBar(
       expandedHeight: 280.0,
       pinned: true,
@@ -71,9 +75,7 @@ class _RecipeHero extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             CachedNetworkImage(
-              imageUrl: recipe.recipeImage.isNotEmpty
-                  ? recipe.recipeImage
-                  : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200',
+              imageUrl: heroImageUrl,
               fit: BoxFit.cover,
               errorWidget: (context, url, error) => Container(
                 color: Colors.grey.shade300,
